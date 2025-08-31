@@ -1,0 +1,414 @@
+{
+  "name": "Thumbnail Generator Backend System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "498ee07c-cde7-499c-8af1-424c13834d59",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        0
+      ],
+      "id": "53d54c7c-1a5b-4651-9264-efc3e34b4894",
+      "name": "Webhook",
+      "webhookId": "498ee07c-cde7-499c-8af1-424c13834d59"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6355ac9e-1f4c-42a3-8167-8bb8298cd369",
+              "name": "data",
+              "value": "={{ $json.choices[0].message.images[0].image_url.url }}",
+              "type": "string"
+            },
+            {
+              "id": "dc98bc1c-4048-4fcb-80c5-73dc99b78ddd",
+              "name": "base",
+              "value": "={{ $json.choices[0].message.images[0].image_url.url.split(',')[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "8033a47e-f50c-43ae-b404-99d0fb5cf4eb",
+              "name": "mime",
+              "value": "={{ $json.choices[0].message.images[0].image_url.url.split(';')[0].split(':')[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "0e516163-02cc-4242-ba70-ac2bce94d2dd",
+              "name": "fileName",
+              "value": ".png",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        -96
+      ],
+      "id": "cd05ac6d-110f-4c03-9fe1-805d4b604f02",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst updatedItems = items.map((item) => {\n  const url = `data:image/png;base64,${item?.json?.data}`;\n  return { url };\n});\nreturn updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        0
+      ],
+      "id": "95643046-6155-4ccc-9748-5490c8ff20c9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer $OPENROUTER_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview:free\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{{ $json.output['Thumbnail Image Prompt'] }}\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"{{ $('Code').item.json.url }}\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        0
+      ],
+      "id": "7ff96f52-e4e2-49db-9cd9-241f8b9cc821",
+      "name": "Nano 🍌",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "fS11SjNqBiNnF7L3",
+          "name": "Header Auth account"
+        },
+        "openRouterApi": {
+          "id": "sw6yyqIrXNw0jbZJ",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a35cfb4e-81c4-429b-b7af-e56ca54861a2",
+              "leftValue": "={{ $json.choices[0].message.images[0].image_url.url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "613d9ba7-1db7-43b8-8787-6addc2141fb0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        -96
+      ],
+      "id": "806ca786-aac2-4241-ac41-1fadd8b47f32",
+      "name": "Convert to Binary"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": true
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        96
+      ],
+      "id": "92058d58-3e40-4eaa-9733-97ce4a6960d6",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1536,
+        -96
+      ],
+      "id": "cea5b117-bb4f-4119-a443-7eadff159e8d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "image",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "c2383ac2-9e54-45a7-937a-dd1f4c538bf2",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "text": "=User Given Thumbnail Description: {{ $('Webhook').item.json.body.description }}\n\nYou are a expert thumbnail designer and prompt engineer for AI image generation. Your sole purpose is to translate a user's description into a highly detailed, effective, and stylistically consistent prompt for creating a YouTube thumbnail. The generated image must incorporate and seamlessly blend a pre-existing character face that has already been provided to the AI model. Your prompt will build upon this existing visual anchor.\n\nWhat User says strictly follow that Command.",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "Thumbnail Image Prompt",
+              "description": "=YouTube thumbnail prompt remember that a character image is already provided and will be used in the thumbnail.",
+              "required": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        0
+      ],
+      "id": "63fd5de0-e260-4801-b849-9bd113cb02ed",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        128,
+        160
+      ],
+      "id": "f42512d2-3ae3-4a1d-8561-e970ac0f6b73",
+      "name": "Gemini 2.5 Flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "r1ZkzE6I04xcx5en",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "---\n\n# 🛠 Setup Guide\n\n1.  **Webhook URL**: Use the generated endpoint to trigger the workflow with a `POST` request.\n\n2.  **API Keys**: Add valid credentials for:\n    -   OpenRouter (in the **Nano 🍌** node)\n    -   Google Gemini (in the **Gemini 2.5 Flash** node)\n\n3.  **Input**: Send a JSON payload with a `description` field and an image file.\n\n4.  **Test**: Activate the workflow and send a request. It will return a generated thumbnail.\n\n\n**Done.** Your workflow will now generate and return AI-powered thumbnails. 🚀",
+        "height": 416,
+        "width": 576,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -576
+      ],
+      "id": "a94dc10f-c33c-484e-8784-2518d1d84347",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Start here: Step-by Step Youtube Tutorial :star:\n[![Googles Nano Banana with n8n](https://img.youtube.com/vi/B0ZRRmeRH_s/sddefault.jpg)](https://youtu.be/B0ZRRmeRH_s)",
+        "height": 352,
+        "width": 352,
+        "color": 6
+      },
+      "id": "5b2a0765-30d5-4fa8-8112-97d25dcb9be3",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        480,
+        -512
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nano 🍌": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Nano 🍌",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Nano 🍌",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f3a615da-ce3e-44fa-98da-8785a3dcf022",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "125e3b631be5af75b5d8304f7125cd5c84e5ea96c148171cca4bfb3fcc88fe9b"
+  },
+  "id": "LlWPWXzMI36hrq5J",
+  "tags": []
+}

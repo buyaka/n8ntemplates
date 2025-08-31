@@ -1,0 +1,320 @@
+{
+  "name": "Lead Generation Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Leads Collector",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Target",
+              "placeholder": "eg, Dentist, Physician, CEO",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Location"
+            },
+            {
+              "fieldLabel": "Social Media",
+              "placeholder": "e.g. Facebook, Instagram, X, Youtube"
+            },
+            {
+              "fieldLabel": "Result Number",
+              "fieldType": "number",
+              "placeholder": "in number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -280,
+        -40
+      ],
+      "id": "ce78abfc-76c2-45e5-bc6f-8fc2f0ed61ae",
+      "name": "On form submission",
+      "webhookId": "bc59cd8b-2e09-4c6f-ae8b-8fdc1b70f593"
+    },
+    {
+      "parameters": {
+        "content": "##  Search 🔍",
+        "height": 280,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -120
+      ],
+      "id": "59860628-aad2-4d9c-bc1e-2fcbaba409cf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"focusOnPaidAds\": false,\n    \"forceExactMatch\": false,\n    \"includeIcons\": false,\n    \"includeUnfilteredResults\": false,\n    \"maxPagesPerQuery\": 1,\n    \"mobileResults\": false,\n    \"queries\": \"site:{{ $json['Social Media'] }}.com + {{ $json.Target }} {{ $json.Location }}\",\n    \"resultsPerPage\": {{ $json['Result Number'] }},\n    \"saveHtml\": false,\n    \"saveHtmlToKeyValueStore\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        60,
+        -40
+      ],
+      "id": "9c7aa992-d624-4e1c-aa68-2afdc7e6ee8a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items[0].json.organicResults.map(result => {\n  const usernameMatch = result.url.match(/instagram\\.com\\/([^\\/?#]+)/i);\n  const locationMatch = result.description.match(/\\b\\d{1,5} .*?, .*?\\d{5}\\b/); // Address detection\n  return {\n    title: result.title || '',\n    username: usernameMatch ? usernameMatch[1] : '',\n    url: result.url || '',\n    description: result.description || '',\n    followers: result.followersAmount || '',\n    location: locationMatch ? locationMatch[0] : '',\n  };\n});\n\nreturn results.map(profile => ({ json: profile }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -40
+      ],
+      "id": "d4b68c64-9a8e-4123-8de0-077ff962de33",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PjeenPD-DHtKoERTY5feRneyIC7vK5TalpWeG24Wx1E",
+          "mode": "list",
+          "cachedResultName": "Social Account Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PjeenPD-DHtKoERTY5feRneyIC7vK5TalpWeG24Wx1E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PjeenPD-DHtKoERTY5feRneyIC7vK5TalpWeG24Wx1E/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.title }}",
+            "Follwers": "={{ $json.followers }}",
+            "Social URL": "={{ $json.url }}",
+            "Description": "={{ $json.description }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Social URL",
+              "displayName": "Social URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Follwers",
+              "displayName": "Follwers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        740,
+        -40
+      ],
+      "id": "f69735c4-8a71-466a-958c-6df7565c2f7f",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tw8iJbHLeqfMESfX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Data Purification 🗳",
+        "height": 280,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        300,
+        -120
+      ],
+      "id": "f4ed2798-99db-42c7-8984-3043793d3378",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Collection 🔋",
+        "height": 280,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -120
+      ],
+      "id": "b2615514-40f2-4f5c-a001-57626cc8b0a6",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "##  Target 🎯",
+        "height": 280,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -120
+      ],
+      "id": "13376746-4d33-4881-b4f6-df3c34cbfe10",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 440,
+        "width": 1460,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        -240
+      ],
+      "id": "181cc71a-3693-470a-a647-ec9dd181e671",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "##  ▶ fill the url \n**Sign UP Apify** to get the end point url. [Apify](https://apify.com/)",
+        "height": 100,
+        "width": 300,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        180
+      ],
+      "id": "f0bb830d-8748-49ff-a325-89ce6c0c6a78",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "# Social Media Data Collector ✔",
+        "height": 80,
+        "width": 520,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        20,
+        -340
+      ],
+      "id": "6326a3c3-bd2f-4922-9750-efc6fa7f6394",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3662689b-0eed-4673-ac08-33369a8fdd36",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5c2f5b5b4cf20114a6c53aaed9430bfdabad5c4604b5a73e1363b96c75e842ec"
+  },
+  "id": "mWYXley2lSszAVjw",
+  "tags": []
+}
